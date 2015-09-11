@@ -1,57 +1,105 @@
 $(document).ready(function () {
-    var app = runApp($("#root"));
-});
+    var app = {};
 
-var runApp = function (rootNode) {
-    var self = this;
+    app.runApp = function () {
+        var self = this.runApp;
 
-    self.model = {
-        "title": "PAC Todo",
-    }
+        var root = $(document.createElement('div'));
 
-    self.view = function() {
-        rootNode.html("<h2>" + self.model.message + "</h2>");
-    }
-
-    self.setTitle = function(newTitle) {
-        self.model.title = newTitle
-        self.view()
-    }
-
-    return self;
-};
-
-var addItem = function (rootNode, text) {
-    var self = this;
-
-    /* abstraction */
-    self.model = {
-        "text": text,
-        "done": false,
-    }
-
-    /* presentation */
-    self.view = function () {
-        rootNode.html(self.model.text);
-        if (!done) {
-            rootNode.removeClass("done");
-            rootNode.addClass("todo");
-        } else {
-            rootNode.removeClass("todo");
-            rootNode.addClass("done");
+        /* abstraction */
+        self.model = {
+            "title": "PAC Todo",
+            "list": app.newList([app.newItem('finish spike')]),
         }
+
+        /* presentation */
+        self.view = function() {
+            root.html("<h1>" + self.model.title + "</h1>");
+            root.append(self.model.list.root);
+        }
+
+        /* control */
+        self.setTitle = function(newTitle) {
+            self.model.title = newTitle;
+            self.view();
+        }
+
+        /* initialization */
+        self.root = root;
+        self.view();
+        return self;
     };
 
-    /* control */
-    self.done = function () {
-        self.model.done = true;
+    app.newList = function (lst) {
+        var self = this.newList;
+        var root = $(document.createElement('ul'));
+
+        /* abstraction */
+        self.model = lst;
+
+        /* presentation */
+        self.view = function () {
+            self.model.forEach(function (item) {
+                var li = document.createElement('li');
+                $(li).append(item.root);
+                $(root).append(li);
+            });
+        }
+
+        self.append = function (item) {
+            self.model.append(item);
+            self.view();
+        }
+
+        self.pop = function () {
+            self.model.pop();
+            self.view();
+        }
+
+        self.root = root;
         self.view();
+        return self;
     }
 
-    self.todo = function () {
-        self.model.done = false;
-        self.view();
-    }
+    app.newItem = function (text) {
+        var self = this.newItem;
+        var root = $(document.createElement('div'));
 
-    return self;
-};
+        /* abstraction */
+        self.model = {
+            "text": text,
+            "done": false,
+        }
+
+        /* presentation */
+        self.view = function () {
+            root.html(self.model.text);
+            root.removeClass();
+            if (!self.model.done) {
+                root.addClass('todo');
+            } else {
+                root.addClass('done');
+            }
+            root.off().on('click', self.toggleDone);
+        };
+
+        /* control */
+        self.toggleDone = function () {
+            if (!self.model.done) {
+                self.model.done = true;
+            } else {
+                self.model.done = false;
+            }
+            self.view();
+        }
+
+        /* initalization */
+        self.root = root;
+        self.view();
+        return self;
+    };
+
+
+    $('body').append(app.runApp().root);
+});
+
