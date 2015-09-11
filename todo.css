@@ -6,7 +6,6 @@ body > div {
     text-align: center;
 }
 ul {
-    display: flex;
     justify-content: center;
     list-style: none;
     margin: 0;

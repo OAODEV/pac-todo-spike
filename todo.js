@@ -2,20 +2,38 @@ $(document).ready(function () {
     var app = {};
 
     app.runApp = function () {
-        var self = this.runApp;
-
+        var self = {};
         var root = $(document.createElement('div'));
+        var todoOne = app.newItem('todoOne');
+        var todoTwo = app.newItem('todoTwo');
+        var todoForm = app.newItem('type your todo here');
+        var todoList = app.newList([todoForm]);
+        var doneFilter = function (todoItem) { return todoItem.model.done };
+        var todoFilter = function (todoItem) { return !todoItem.model.done };
+
+        todoForm.form();
+        todoOne.model.done = true;
+        todoOne.view();
 
         /* abstraction */
         self.model = {
             "title": "PAC Todo",
-            "list": app.newList([app.newItem('finish spike')]),
+            "list": app.newList([todoOne, todoTwo, todoForm]),
+            "filter": {
+                "#done": doneFilter,
+                "#todo": todoFilter,
+            }
         }
 
         /* presentation */
         self.view = function() {
+            var fragment = window.location.hash
             root.html("<h1>" + self.model.title + "</h1>");
+            if (self.model.filter[fragment]) {
+                self.model.list.filter = self.model.filter[fragment];
+            }
             root.append(self.model.list.root);
+            self.model.list.view();
         }
 
         /* control */
@@ -24,30 +42,45 @@ $(document).ready(function () {
             self.view();
         }
 
+        self.appendTodoForm = function () {
+            var todoForm = app.newItem('new todo');
+            todoForm.form();
+            todoForm.postBecomeHook = self.appendTodoForm;
+            self.model.list.push(todoForm);
+        }
+
         /* initialization */
+        todoForm.postBecomeHook = self.appendTodoForm;
         self.root = root;
         self.view();
         return self;
     };
 
     app.newList = function (lst) {
-        var self = this.newList;
+        var self = {};
         var root = $(document.createElement('ul'));
 
         /* abstraction */
         self.model = lst;
+        self.filter = function (x) { return true; };
 
         /* presentation */
         self.view = function () {
             self.model.forEach(function (item) {
-                var li = document.createElement('li');
-                $(li).append(item.root);
-                $(root).append(li);
+                var li
+                if (self.filter(item)) {
+                    li = document.createElement('li');
+                    $(li).append(item.root);
+                    $(root).append(li);
+                }
+                $('li').filter(function () {
+                    return $.trim(this.innerHTML) === "";
+                }).remove();
             });
         }
 
-        self.append = function (item) {
-            self.model.append(item);
+        self.push = function (item) {
+            self.model.push(item);
             self.view();
         }
 
@@ -57,12 +90,11 @@ $(document).ready(function () {
         }
 
         self.root = root;
-        self.view();
         return self;
     }
 
     app.newItem = function (text) {
-        var self = this.newItem;
+        var self = {};
         var root = $(document.createElement('div'));
 
         /* abstraction */
@@ -83,6 +115,12 @@ $(document).ready(function () {
             root.off().on('click', self.toggleDone);
         };
 
+        self.form = function () {
+            root.removeClass();
+            root.html("<form>new: <input type='text' value='" + self.model.text + "' name='new-todo'></form><i class='fa fa-check'></i>");
+            root.off().on('click', '.fa-check', self.becomeTodo);
+        }
+
         /* control */
         self.toggleDone = function () {
             if (!self.model.done) {
@@ -93,13 +131,24 @@ $(document).ready(function () {
             self.view();
         }
 
+        self.postBecomeHook = function () {
+            console.log("default post become hook")
+        };
+
+        self.becomeTodo = function (e) {
+            /* update the model based on form input then view the new item */
+            e.preventDefault();
+            self.model.text = $('input[name=new-todo]').val();
+            self.model.done = false;
+            self.view();
+            self.postBecomeHook();
+        }
+
         /* initalization */
         self.root = root;
         self.view();
         return self;
     };
 
-
     $('body').append(app.runApp().root);
 });
-
