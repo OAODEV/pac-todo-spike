@@ -4,8 +4,8 @@ $(document).ready(function () {
     app.runApp = function () {
         var self = {};
         var root = $(document.createElement('div'));
-        var todoOne = app.newItem('todoOne');
-        var todoTwo = app.newItem('todoTwo');
+        var todoOne = app.newItem('do somethig first');
+        var todoTwo = app.newItem('then do something else');
         var todoForm = app.newItem('type your todo here');
         var todoList = app.newList([todoForm]);
         var doneFilter = function (todoItem) { return todoItem.model.done };
